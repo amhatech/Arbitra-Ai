@@ -188,6 +188,7 @@ export function DashboardClient({
   const [actionError, setActionError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [fundingMessage, setFundingMessage] = useState("");
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   const loadMilestones = useCallback(async () => {
     if (!userEmail) {
@@ -616,25 +617,6 @@ export function DashboardClient({
       .map(([currency, amount]) => formatCurrency(amount, currency))
       .join(" · ") || formatCurrency(0, "USD");
 
-  if (!userEmail) {
-    return (
-      <main className="min-h-screen bg-[#0b0e13] px-5 py-10 text-slate-100">
-        <div className="mx-auto flex min-h-[80vh] max-w-7xl flex-col items-center justify-center">
-          <div className="mb-8 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-300 text-slate-950">
-              <ShieldCheck size={21} />
-            </div>
-            <span className="text-sm font-semibold tracking-[0.16em] text-white">ARBITRA AI</span>
-          </div>
-          <LoginPanel configurationReady={configurationReady} />
-          <p className="mt-6 max-w-md text-center text-xs leading-5 text-slate-600">
-            Only verified contract parties can view milestones, authorize escrow, or raise a dispute.
-          </p>
-        </div>
-      </main>
-    );
-  }
-
   const totals = [
     {
       label: "Live contract volume",
@@ -680,21 +662,51 @@ export function DashboardClient({
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[0.05] px-3 py-1.5 text-[11px] text-emerald-200">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" />
-              Secure session
-            </div>
-            <span className="max-w-[220px] truncate text-xs text-slate-400">{userEmail}</span>
-            <button
-              className="rounded-lg border border-white/10 p-2 text-slate-400 transition hover:border-white/20 hover:text-white"
-              onClick={() => void signOut()}
-              title="Sign out"
-              type="button"
-            >
-              <LogOut size={15} />
-            </button>
+            {userEmail ? (
+              <>
+                <div className="flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[0.05] px-3 py-1.5 text-[11px] text-emerald-200">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" />
+                  Secure session
+                </div>
+                <span className="max-w-[220px] truncate text-xs text-slate-400">{userEmail}</span>
+                <button
+                  className="rounded-lg border border-white/10 p-2 text-slate-400 transition hover:border-white/20 hover:text-white"
+                  onClick={() => void signOut()}
+                  title="Sign out"
+                  type="button"
+                >
+                  <LogOut size={15} />
+                </button>
+              </>
+            ) : (
+              <span className="flex items-center gap-2 rounded-full border border-violet-300/15 bg-violet-300/[0.05] px-3 py-1.5 text-[11px] text-violet-200">
+                <Sparkles size={13} />
+                Public interactive demo
+              </span>
+            )}
           </div>
         </header>
+
+        {!userEmail ? (
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-cyan-300/15 bg-cyan-300/[0.04] px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-cyan-100">
+                Welcome, reviewers — no account or API keys needed.
+              </p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">
+                Try both simulation buttons to see a failed review and the 24-hour release hold. Demo activity stays in this browser and never moves money.
+              </p>
+            </div>
+            <a
+              className="shrink-0 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-white/20 hover:text-white"
+              href="https://github.com/amhatech/Arbitra-Ai"
+              rel="noreferrer"
+              target="_blank"
+            >
+              View public source
+            </a>
+          </div>
+        ) : null}
 
         <section className="flex flex-wrap items-end justify-between gap-4 py-8">
           <div>
@@ -784,12 +796,13 @@ export function DashboardClient({
             />
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-600">
-            <span>Live records are scoped to your verified party email.</span>
+            <span>{userEmail ? "Live records are scoped to your verified party email." : "Live contract data requires verified party sign-in."}</span>
             <span>DEMO rows are local-only and never contact PayPal or Supabase.</span>
           </div>
         </section>
 
         <section className="mt-6 grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
+          {userEmail ? (
           <article className="flex min-h-[470px] flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-[#11151d]">
             <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
               <div>
@@ -866,6 +879,32 @@ export function DashboardClient({
               </div>
             </form>
           </article>
+          ) : (
+            <article className="flex min-h-[470px] flex-col items-center justify-center gap-5 rounded-2xl border border-white/[0.07] bg-[#11151d] p-6 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-cyan-300/15 bg-cyan-300/[0.06] text-cyan-200">
+                <MessageSquareText size={20} />
+              </div>
+              <div className="max-w-sm">
+                <h2 className="text-sm font-semibold text-slate-100">
+                  Live AI contract parser
+                </h2>
+                <p className="mt-2 text-xs leading-6 text-slate-400">
+                  The natural-language contract parser uses Gemini and writes to the secured Supabase ledger. Sign in with a verified contract-party email to use it. The simulation panel beside this card is open to everyone.
+                </p>
+              </div>
+              {isLoginOpen ? (
+                <LoginPanel configurationReady={configurationReady} />
+              ) : (
+                <button
+                  className="rounded-lg bg-cyan-300 px-4 py-2.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-200"
+                  onClick={() => setIsLoginOpen(true)}
+                  type="button"
+                >
+                  Sign in for live contracts
+                </button>
+              )}
+            </article>
+          )}
 
           <article className="rounded-2xl border border-white/[0.07] bg-[#11151d] p-5">
             <div className="flex items-start justify-between gap-3">
@@ -952,8 +991,8 @@ export function DashboardClient({
         <footer className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] py-5 text-[10px] text-slate-600">
           <span>Arbitra AI · compliance-grade escrow controls</span>
           <span className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-            Signed in · {userEmail}
+            <span className={`h-1.5 w-1.5 rounded-full ${userEmail ? "bg-emerald-300" : "bg-violet-300"}`} />
+            {userEmail ? `Signed in · ${userEmail}` : "Public judge demo · no sign-in required"}
           </span>
         </footer>
       </div>

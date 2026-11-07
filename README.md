@@ -4,6 +4,36 @@ Arbitra AI is a Next.js 15, Supabase, Gemini, and PayPal Sandbox application for
 freelance contract negotiation, milestone evidence review, and client-controlled
 funding releases.
 
+## Judge preview
+
+The public dashboard opens in an interactive, no-login demo mode. Use the
+simulation controls to try a broken commit and a compliant commit. The AG Grid
+updates locally to show the compliance score and release hold. Demo activity is
+kept in the browser and never calls a payment service or changes a real contract.
+
+The live contract parser and verified Supabase ledger require a configured
+deployment and a verified party sign-in. The public demo deliberately does not
+pretend that a simulated score came from an AI model.
+
+## AI and developer tools used
+
+- **Google Gemini 2.5 Flash**, called from server-side API routes through the
+  Vercel AI SDK `generateObject`, extracts negotiation terms into a validated
+  contract schema and compares an authorized GitHub commit diff against
+  milestone acceptance criteria. The server validates model output and never
+  treats the model as a payment authority.
+- **GitHub REST API** retrieves the commit diff from one configured repository.
+  The verifier does not accept a diff supplied by the webhook caller.
+- **Supabase Postgres and Supabase Auth** store contract, milestone, and payout
+  records; verify party email; and enforce the release hold and payout
+  transitions with database functions.
+- **PayPal REST API Sandbox** handles contract authorization/capture and
+  milestone payouts. PayPal webhook signatures are verified before settlement
+  records are updated.
+- **Vercel AI SDK**, **Next.js**, and **AG Grid Community** provide typed
+  structured generation, the application and API runtime, and the interactive
+  milestone ledger.
+
 ## Requirements
 
 - Node.js 20.9 or newer
