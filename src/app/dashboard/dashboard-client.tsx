@@ -365,7 +365,7 @@ export function DashboardClient({
                 <span className="truncate text-sm font-medium text-slate-100">{row.title}</span>
                 {row.isSimulated ? (
                   <span className="shrink-0 rounded border border-violet-300/20 bg-violet-300/10 px-1.5 py-0.5 text-[9px] font-semibold tracking-wider text-violet-200">
-                    PREVIEW
+                    DEMO
                   </span>
                 ) : null}
               </div>
@@ -675,7 +675,7 @@ export function DashboardClient({
   ];
 
   return (
-    <main className="dashboard-light min-h-screen bg-[#0b0e13] px-4 py-6 text-slate-100 sm:px-7 lg:px-10">
+    <main className="min-h-screen bg-[#0b0e13] px-4 py-6 text-slate-100 sm:px-7 lg:px-10">
       <div className="mx-auto max-w-[1600px]">
         <header className="flex flex-wrap items-center justify-between gap-5 border-b border-white/[0.07] pb-6">
           <div className="flex items-center gap-3">
@@ -685,7 +685,7 @@ export function DashboardClient({
             <div>
               <p className="text-sm font-semibold tracking-[0.18em] text-white">ARBITRA AI</p>
               <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.17em] text-slate-500">
-                Freelance escrow workspace
+                Escrow & compliance control plane
               </p>
             </div>
           </div>
@@ -709,7 +709,7 @@ export function DashboardClient({
             ) : (
               <span className="flex items-center gap-2 rounded-full border border-violet-300/15 bg-violet-300/[0.05] px-3 py-1.5 text-[11px] text-violet-200">
                 <Sparkles size={13} />
-                Public product preview
+                Public interactive demo
               </span>
             )}
           </div>
@@ -719,10 +719,10 @@ export function DashboardClient({
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-cyan-300/15 bg-cyan-300/[0.04] px-4 py-3">
             <div>
               <p className="text-sm font-medium text-cyan-100">
-                Explore the Arbitra AI product preview.
+                Welcome, reviewers — no account or API keys needed.
               </p>
               <p className="mt-1 text-xs leading-5 text-slate-400">
-                Try the preview scenarios to see a failed review and the 24-hour release hold. Preview activity stays in this browser and never moves money.
+                Try both simulation buttons to see a failed review and the 24-hour release hold. Demo activity stays in this browser and never moves money.
               </p>
             </div>
             <a
@@ -740,10 +740,10 @@ export function DashboardClient({
           <div>
             <p className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-cyan-300">
               <Activity size={14} />
-              Portfolio overview
+              Treasury overview
             </p>
             <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-[38px]">
-              Escrow overview
+              Escrow command center
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
               Monitor objective delivery, protected balances, and every human release gate in one place.
@@ -809,7 +809,7 @@ export function DashboardClient({
             </div>
           ) : null}
 
-          <div className="ag-grid-light overflow-hidden rounded-xl border border-white/[0.07]">
+          <div className="ag-grid-dark overflow-hidden rounded-xl border border-white/[0.07]">
             <AgGridReact<MilestoneGridRow>
               animateRows
               columnDefs={columnDefs}
@@ -825,7 +825,7 @@ export function DashboardClient({
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-600">
             <span>{userEmail ? "Live records are scoped to your verified party email." : "Live contract data requires verified party sign-in."}</span>
-            <span>PREVIEW rows are local-only and never contact PayPal or Supabase.</span>
+            <span>DEMO rows are local-only and never contact PayPal or Supabase.</span>
           </div>
         </section>
 
@@ -913,14 +913,14 @@ export function DashboardClient({
                 <div>
                   <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-100">
                     <MessageSquareText size={16} className="text-cyan-300" />
-                    Contract negotiation
+                    Contract negotiation chat
                   </h2>
                   <p className="mt-1 text-xs text-slate-500">
                     Local preview · messages are not sent or saved
                   </p>
                 </div>
                 <span className="rounded-full border border-violet-300/15 bg-violet-300/[0.05] px-2.5 py-1 text-[10px] text-violet-200">
-                  PREVIEW
+                  DEMO ONLY
                 </span>
               </div>
 
@@ -950,7 +950,7 @@ export function DashboardClient({
                           <Bot size={14} />
                         </div>
                         <div className="max-w-[88%] rounded-xl border border-white/[0.06] bg-[#0c1016] px-4 py-3 text-xs leading-6 text-slate-300">
-                          Type a sample negotiation message to preview the chat. It stays in this browser and is not sent to an AI service.
+                          Type a sample negotiation message to preview the chat. This public demo does not send it to an AI service.
                         </div>
                       </div>
                     ) : null}
@@ -1034,7 +1034,7 @@ export function DashboardClient({
               <div>
                 <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-100">
                   <Sparkles size={16} className="text-violet-300" />
-                  Preview scenarios
+                  Simulation control grid
                 </h2>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
                   Exercise the compliance threshold and dual-gate interface without touching a real contract.
@@ -1115,7 +1115,7 @@ export function DashboardClient({
           <span>Arbitra AI · compliance-grade escrow controls</span>
           <span className="flex items-center gap-2">
             <span className={`h-1.5 w-1.5 rounded-full ${userEmail ? "bg-emerald-300" : "bg-violet-300"}`} />
-            {userEmail ? `Signed in · ${userEmail}` : "Public product preview · no sign-in required"}
+            {userEmail ? `Signed in · ${userEmail}` : "Public judge demo · no sign-in required"}
           </span>
           <button
             className="rounded-lg border border-white/10 px-3 py-2 text-[10px] font-medium text-slate-300 transition hover:border-cyan-300/25 hover:text-cyan-200"
