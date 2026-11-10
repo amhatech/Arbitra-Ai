@@ -18,6 +18,7 @@ import {
   FileCheck2,
   GitCommitHorizontal,
   LoaderCircle,
+  LockKeyhole,
   LogOut,
   MessageSquareText,
   Pause,
@@ -77,7 +78,7 @@ const demoMilestone: MilestoneGridRow = {
 const statusStyles: Record<MilestoneStatus, string> = {
   AWAITING_FUNDS: "border-amber-300/20 bg-amber-300/10 text-amber-200",
   ESCROWED: "border-sky-300/20 bg-sky-300/10 text-sky-200",
-  PENDING_RELEASE: "border-emerald-300/20 bg-emerald-300/10 text-emerald-200",
+  PENDING_RELEASE: "animate-pulse border-orange-300/25 bg-orange-300/10 text-orange-200",
   PAID: "border-slate-400/20 bg-slate-400/10 text-slate-300",
   MUTED_DISPUTE: "border-rose-300/20 bg-rose-300/10 text-rose-200",
 };
@@ -183,6 +184,10 @@ export function DashboardClient({
         "Share the agreed terms, party emails, budget, and objective milestone criteria. I will structure the negotiation and flag subjective requirements before saving.",
     },
   ]);
+  const [demoChatMessages, setDemoChatMessages] = useState<ChatMessage[]>([]);
+  const [demoChatInput, setDemoChatInput] = useState("");
+  const [isDemoChatLocked, setIsDemoChatLocked] = useState(false);
+  const [showArchitectureSlide, setShowArchitectureSlide] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
   const [actionError, setActionError] = useState("");
@@ -345,7 +350,8 @@ export function DashboardClient({
     () => [
       {
         headerName: "Milestone title & status",
-        field: "title",
+        valueGetter: (params) =>
+          params.data ? `${params.data.title} ${params.data.status}` : "",
         minWidth: 250,
         flex: 1.5,
         cellRenderer: (params: ICellRendererParams<MilestoneGridRow>) => {
@@ -407,7 +413,10 @@ export function DashboardClient({
                 <span className="font-mono text-slate-200">{score}%</span>
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
-                <div className={`h-full rounded-full ${color}`} style={{ width: `${score}%` }} />
+                <div
+                  className={`h-full rounded-full transition-all duration-1000 ease-out ${color}`}
+                  style={{ width: `${score}%` }}
+                />
               </div>
             </div>
           );
@@ -569,13 +578,13 @@ export function DashboardClient({
       setDemoRow((current) => ({
         ...current,
         status: "PENDING_RELEASE",
-        score: 96,
+        score: 92,
         commitHash: "a41ce9b10f7d",
         verificationTimestamp: verifiedAt,
         releaseCountdownEta: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       }));
       setActionMessage(
-        "Simulation only: 96% objective compliance opened a 24-hour client hold. No money moved.",
+        "Simulation only: 92% objective compliance opened a 24-hour client hold. No money moved.",
       );
     } else {
       setDemoRow((current) => ({
@@ -591,6 +600,25 @@ export function DashboardClient({
       );
     }
     setIsSimulating(false);
+  }
+
+  function submitDemoChat(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const content = demoChatInput.trim();
+    if (!content || isDemoChatLocked) {
+      return;
+    }
+
+    setDemoChatMessages((current) => [
+      ...current,
+      { role: "user", content },
+      {
+        role: "assistant",
+        content:
+          "Preview only — this message stays in your browser and was not sent to Gemini or saved as a contract. Sign in with a verified party email to use the live parser.",
+      },
+    ]);
+    setDemoChatInput("");
   }
 
   async function signOut() {
@@ -880,27 +908,122 @@ export function DashboardClient({
             </form>
           </article>
           ) : (
-            <article className="flex min-h-[470px] flex-col items-center justify-center gap-5 rounded-2xl border border-white/[0.07] bg-[#11151d] p-6 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-cyan-300/15 bg-cyan-300/[0.06] text-cyan-200">
-                <MessageSquareText size={20} />
+            <article className="flex min-h-[470px] flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-[#11151d]">
+              <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
+                <div>
+                  <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+                    <MessageSquareText size={16} className="text-cyan-300" />
+                    Contract negotiation chat
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Local preview · messages are not sent or saved
+                  </p>
+                </div>
+                <span className="rounded-full border border-violet-300/15 bg-violet-300/[0.05] px-2.5 py-1 text-[10px] text-violet-200">
+                  DEMO ONLY
+                </span>
               </div>
-              <div className="max-w-sm">
-                <h2 className="text-sm font-semibold text-slate-100">
-                  Live AI contract parser
-                </h2>
-                <p className="mt-2 text-xs leading-6 text-slate-400">
-                  The natural-language contract parser uses Gemini and writes to the secured Supabase ledger. Sign in with a verified contract-party email to use it. The simulation panel beside this card is open to everyone.
-                </p>
-              </div>
+
+              {isDemoChatLocked ? (
+                <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-orange-300/20 bg-orange-300/[0.07] text-orange-200">
+                    <LockKeyhole size={20} />
+                  </div>
+                  <p className="mt-4 text-sm font-semibold text-slate-100">Client left the chat.</p>
+                  <p className="mt-2 max-w-xs text-xs leading-5 text-slate-500">
+                    This conversation is locked. No contract or payment was changed.
+                  </p>
+                  <button
+                    className="mt-5 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-white/20 hover:text-white"
+                    onClick={() => setIsDemoChatLocked(false)}
+                    type="button"
+                  >
+                    Return to chat preview
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex-1 space-y-3 overflow-y-auto p-5">
+                    {demoChatMessages.length === 0 ? (
+                      <div className="flex gap-3">
+                        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-cyan-300/15 bg-cyan-300/[0.06] text-cyan-200">
+                          <Bot size={14} />
+                        </div>
+                        <div className="max-w-[88%] rounded-xl border border-white/[0.06] bg-[#0c1016] px-4 py-3 text-xs leading-6 text-slate-300">
+                          Type a sample negotiation message to preview the chat. This public demo does not send it to an AI service.
+                        </div>
+                      </div>
+                    ) : null}
+                    {demoChatMessages.map((message, index) => (
+                      <div
+                        className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}
+                        key={`demo-${message.role}-${index}`}
+                      >
+                        <div
+                          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                            message.role === "assistant"
+                              ? "border border-cyan-300/15 bg-cyan-300/[0.06] text-cyan-200"
+                              : "border border-white/10 bg-white/[0.05] text-slate-300"
+                          }`}
+                        >
+                          {message.role === "assistant" ? <Bot size={14} /> : <span className="text-[10px]">YOU</span>}
+                        </div>
+                        <div
+                          className={`max-w-[88%] rounded-xl px-4 py-3 text-xs leading-6 ${
+                            message.role === "assistant"
+                              ? "border border-white/[0.06] bg-[#0c1016] text-slate-300"
+                              : "border border-cyan-300/10 bg-cyan-300/[0.05] text-slate-200"
+                          }`}
+                        >
+                          {message.content}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <form className="border-t border-white/[0.07] p-4" onSubmit={submitDemoChat}>
+                    <label className="sr-only" htmlFor="demo-chat-message">
+                      Type a sample negotiation message
+                    </label>
+                    <textarea
+                      className="min-h-[90px] w-full resize-y rounded-xl border border-white/[0.08] bg-[#0b0e13] p-3 text-xs leading-5 text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-cyan-300/30"
+                      id="demo-chat-message"
+                      onChange={(event) => setDemoChatInput(event.target.value)}
+                      placeholder="Type a sample message for the screen recording…"
+                      value={demoChatInput}
+                    />
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                      <button
+                        className="text-[10px] text-slate-500 transition hover:text-orange-200"
+                        onClick={() => setIsDemoChatLocked(true)}
+                        type="button"
+                      >
+                        Show “Client left the chat”
+                      </button>
+                      <button
+                        className="flex items-center gap-2 rounded-lg bg-cyan-300 px-3.5 py-2 text-xs font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={!demoChatInput.trim()}
+                        type="submit"
+                      >
+                        <Send size={13} />
+                        Preview message
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
+
               {isLoginOpen ? (
-                <LoginPanel configurationReady={configurationReady} />
+                <div className="border-t border-white/[0.07] p-4">
+                  <LoginPanel configurationReady={configurationReady} />
+                </div>
               ) : (
                 <button
-                  className="rounded-lg bg-cyan-300 px-4 py-2.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-200"
+                  className="border-t border-white/[0.07] px-5 py-3 text-left text-[11px] font-medium text-cyan-200 transition hover:bg-white/[0.02]"
                   onClick={() => setIsLoginOpen(true)}
                   type="button"
                 >
-                  Sign in for live contracts
+                  Sign in for the live Gemini parser →
                 </button>
               )}
             </article>
@@ -994,8 +1117,63 @@ export function DashboardClient({
             <span className={`h-1.5 w-1.5 rounded-full ${userEmail ? "bg-emerald-300" : "bg-violet-300"}`} />
             {userEmail ? `Signed in · ${userEmail}` : "Public judge demo · no sign-in required"}
           </span>
+          <button
+            className="rounded-lg border border-white/10 px-3 py-2 text-[10px] font-medium text-slate-300 transition hover:border-cyan-300/25 hover:text-cyan-200"
+            onClick={() => setShowArchitectureSlide(true)}
+            type="button"
+          >
+            View architecture slide
+          </button>
         </footer>
       </div>
+
+      {showArchitectureSlide ? (
+        <div
+          aria-labelledby="architecture-title"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#080b10]/95 p-6 backdrop-blur-xl"
+          role="dialog"
+        >
+          <button
+            aria-label="Close architecture slide"
+            className="absolute right-6 top-6 rounded-lg border border-white/10 p-2 text-slate-400 transition hover:text-white"
+            onClick={() => setShowArchitectureSlide(false)}
+            type="button"
+          >
+            <X size={18} />
+          </button>
+          <div className="w-full max-w-5xl">
+            <p className="text-center text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
+              Arbitra AI · System architecture
+            </p>
+            <h2
+              className="mt-4 text-center text-3xl font-semibold tracking-tight text-white sm:text-5xl"
+              id="architecture-title"
+            >
+              Secure by design. Human controlled.
+            </h2>
+            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { name: "Next.js 15", detail: "App Router · typed API routes", color: "text-cyan-200" },
+                { name: "Supabase", detail: "Postgres · Auth · release holds", color: "text-emerald-200" },
+                { name: "PayPal SDK", detail: "REST API · sandbox payments", color: "text-orange-200" },
+                { name: "AG Grid", detail: "Milestone ledger · live status", color: "text-violet-200" },
+              ].map((technology) => (
+                <div
+                  className="rounded-2xl border border-white/[0.09] bg-white/[0.035] p-6 text-center"
+                  key={technology.name}
+                >
+                  <p className={`text-xl font-semibold ${technology.color}`}>{technology.name}</p>
+                  <p className="mt-3 text-xs leading-5 text-slate-400">{technology.detail}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-10 text-center text-xs text-slate-500">
+              AI assists with structured review; verified humans control every release.
+            </p>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
