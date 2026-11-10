@@ -808,21 +808,105 @@ export function DashboardClient({
             </div>
           ) : null}
 
-          <div className="overflow-x-auto rounded-xl border border-white/[0.07]">
+          <div className="hidden overflow-x-auto rounded-xl border border-white/[0.07] sm:block">
             <div className="ag-grid-classic min-w-[980px] overflow-hidden">
-            <AgGridReact<MilestoneGridRow>
-              animateRows
-              columnDefs={columnDefs}
-              defaultColDef={defaultColDef}
-              domLayout="autoHeight"
-              getRowId={(params) => params.data.id}
-              headerHeight={48}
-              rowData={gridRows}
-              rowHeight={76}
-              theme={themeQuartz}
-              suppressCellFocus
-            />
+              <AgGridReact<MilestoneGridRow>
+                animateRows
+                columnDefs={columnDefs}
+                defaultColDef={defaultColDef}
+                domLayout="autoHeight"
+                getRowId={(params) => params.data.id}
+                headerHeight={48}
+                rowData={gridRows}
+                rowHeight={76}
+                theme={themeQuartz}
+                suppressCellFocus
+              />
             </div>
+          </div>
+          <div className="space-y-3 sm:hidden">
+            {gridRows.map((row) => {
+              const holdExpired =
+                row.releaseCountdownEta !== null &&
+                new Date(row.releaseCountdownEta).getTime() <= Date.now();
+              const scoreColor =
+                row.score === null
+                  ? "bg-slate-500"
+                  : row.score >= 85
+                    ? "bg-emerald-400"
+                    : row.score >= 60
+                      ? "bg-amber-400"
+                      : "bg-rose-400";
+
+              return (
+                <article
+                  className="rounded-xl border border-white/[0.08] bg-[#11151d] p-4"
+                  key={row.id}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-100">{row.title}</p>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        {formatCurrency(row.amount, row.currency)}
+                        {row.isSimulated ? " · Preview data" : ""}
+                      </p>
+                    </div>
+                    <StatusBadge status={row.status} />
+                  </div>
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                      <span>Compliance score</span>
+                      <span>{row.score === null ? "Not reviewed" : `${row.score}%`}</span>
+                    </div>
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
+                      <div
+                        className={`h-full rounded-full ${scoreColor}`}
+                        style={{ width: `${row.score ?? 0}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.06] pt-3">
+                    <span className="font-mono text-[10px] text-slate-500">
+                      {row.commitHash
+                        ? row.commitHash.slice(0, 10)
+                        : "Awaiting commit evidence"}
+                    </span>
+                    {row.status === "PENDING_RELEASE" && row.releaseCountdownEta ? (
+                      <div className="flex flex-wrap items-center justify-end gap-3">
+                        {holdExpired && row.canRelease ? (
+                          <button
+                            className="rounded-lg border border-emerald-300/20 bg-emerald-300/[0.07] px-2.5 py-1.5 text-[10px] font-medium text-emerald-200"
+                            onClick={() => void handleRelease(row)}
+                            type="button"
+                          >
+                            Release remaining
+                          </button>
+                        ) : (
+                          <button
+                            className="rounded-lg border border-rose-300/20 bg-rose-300/[0.07] px-2.5 py-1.5 text-[10px] font-medium text-rose-200"
+                            onClick={() => void handleDispute(row)}
+                            type="button"
+                          >
+                            Pause & dispute
+                          </button>
+                        )}
+                        <CountdownTimer eta={row.releaseCountdownEta} />
+                      </div>
+                    ) : row.status === "AWAITING_FUNDS" &&
+                      !row.isSimulated &&
+                      row.canAuthorize ? (
+                      <button
+                        className="rounded-lg border border-cyan-300/20 bg-cyan-300/[0.07] px-2.5 py-1.5 text-[10px] font-medium text-cyan-200"
+                        onClick={() => void handleAuthorize(row)}
+                        type="button"
+                      >
+                        Authorize escrow
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-600">
             <span>{userEmail ? "Live records are scoped to your verified party email." : "Live contract data requires verified party sign-in."}</span>
