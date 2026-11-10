@@ -26,7 +26,6 @@ import {
   Send,
   ShieldCheck,
   ShieldAlert,
-  Sparkles,
   WalletCards,
   X,
 } from "lucide-react";
@@ -78,7 +77,7 @@ const demoMilestone: MilestoneGridRow = {
 const statusStyles: Record<MilestoneStatus, string> = {
   AWAITING_FUNDS: "border-amber-300/20 bg-amber-300/10 text-amber-200",
   ESCROWED: "border-sky-300/20 bg-sky-300/10 text-sky-200",
-  PENDING_RELEASE: "animate-pulse border-orange-300/25 bg-orange-300/10 text-orange-200",
+  PENDING_RELEASE: "border-amber-300/20 bg-amber-300/[0.08] text-amber-200",
   PAID: "border-slate-400/20 bg-slate-400/10 text-slate-300",
   MUTED_DISPUTE: "border-rose-300/20 bg-rose-300/10 text-rose-200",
 };
@@ -365,7 +364,7 @@ export function DashboardClient({
                 <span className="truncate text-sm font-medium text-slate-100">{row.title}</span>
                 {row.isSimulated ? (
                   <span className="shrink-0 rounded border border-violet-300/20 bg-violet-300/10 px-1.5 py-0.5 text-[9px] font-semibold tracking-wider text-violet-200">
-                    DEMO
+                    PREVIEW
                   </span>
                 ) : null}
               </div>
@@ -675,7 +674,7 @@ export function DashboardClient({
   ];
 
   return (
-    <main className="min-h-screen bg-[#0b0e13] px-4 py-6 text-slate-100 sm:px-7 lg:px-10">
+    <main className="dashboard-classic min-h-screen bg-[#0b0e13] px-4 py-6 text-slate-100 sm:px-7 lg:px-10">
       <div className="mx-auto max-w-[1600px]">
         <header className="flex flex-wrap items-center justify-between gap-5 border-b border-white/[0.07] pb-6">
           <div className="flex items-center gap-3">
@@ -685,7 +684,7 @@ export function DashboardClient({
             <div>
               <p className="text-sm font-semibold tracking-[0.18em] text-white">ARBITRA AI</p>
               <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.17em] text-slate-500">
-                Escrow & compliance control plane
+                Freelance escrow workspace
               </p>
             </div>
           </div>
@@ -708,8 +707,8 @@ export function DashboardClient({
               </>
             ) : (
               <span className="flex items-center gap-2 rounded-full border border-violet-300/15 bg-violet-300/[0.05] px-3 py-1.5 text-[11px] text-violet-200">
-                <Sparkles size={13} />
-                Public interactive demo
+                <ShieldCheck size={13} />
+                Preview environment
               </span>
             )}
           </div>
@@ -719,10 +718,10 @@ export function DashboardClient({
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-cyan-300/15 bg-cyan-300/[0.04] px-4 py-3">
             <div>
               <p className="text-sm font-medium text-cyan-100">
-                Welcome, reviewers — no account or API keys needed.
+                Product preview
               </p>
               <p className="mt-1 text-xs leading-5 text-slate-400">
-                Try both simulation buttons to see a failed review and the 24-hour release hold. Demo activity stays in this browser and never moves money.
+                Explore the milestone review and 24-hour client hold. Sample activity is kept in this browser and never moves money.
               </p>
             </div>
             <a
@@ -740,10 +739,10 @@ export function DashboardClient({
           <div>
             <p className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-cyan-300">
               <Activity size={14} />
-              Treasury overview
+              Portfolio overview
             </p>
             <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-[38px]">
-              Escrow command center
+              Escrow overview
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
               Monitor objective delivery, protected balances, and every human release gate in one place.
@@ -809,7 +808,8 @@ export function DashboardClient({
             </div>
           ) : null}
 
-          <div className="ag-grid-dark overflow-hidden rounded-xl border border-white/[0.07]">
+          <div className="overflow-x-auto rounded-xl border border-white/[0.07]">
+            <div className="ag-grid-classic min-w-[980px] overflow-hidden">
             <AgGridReact<MilestoneGridRow>
               animateRows
               columnDefs={columnDefs}
@@ -822,10 +822,11 @@ export function DashboardClient({
               theme={themeQuartz}
               suppressCellFocus
             />
+            </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-600">
             <span>{userEmail ? "Live records are scoped to your verified party email." : "Live contract data requires verified party sign-in."}</span>
-            <span>DEMO rows are local-only and never contact PayPal or Supabase.</span>
+            <span>Sample rows are local-only and never contact PayPal or Supabase.</span>
           </div>
         </section>
 
@@ -920,7 +921,7 @@ export function DashboardClient({
                   </p>
                 </div>
                 <span className="rounded-full border border-violet-300/15 bg-violet-300/[0.05] px-2.5 py-1 text-[10px] text-violet-200">
-                  DEMO ONLY
+                  PREVIEW
                 </span>
               </div>
 
@@ -1033,8 +1034,8 @@ export function DashboardClient({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-100">
-                  <Sparkles size={16} className="text-violet-300" />
-                  Simulation control grid
+                  <ShieldCheck size={16} className="text-violet-300" />
+                  Preview scenarios
                 </h2>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
                   Exercise the compliance threshold and dual-gate interface without touching a real contract.
@@ -1115,14 +1116,14 @@ export function DashboardClient({
           <span>Arbitra AI · compliance-grade escrow controls</span>
           <span className="flex items-center gap-2">
             <span className={`h-1.5 w-1.5 rounded-full ${userEmail ? "bg-emerald-300" : "bg-violet-300"}`} />
-            {userEmail ? `Signed in · ${userEmail}` : "Public judge demo · no sign-in required"}
+            {userEmail ? `Signed in · ${userEmail}` : "Public preview · no sign-in required"}
           </span>
           <button
             className="rounded-lg border border-white/10 px-3 py-2 text-[10px] font-medium text-slate-300 transition hover:border-cyan-300/25 hover:text-cyan-200"
             onClick={() => setShowArchitectureSlide(true)}
             type="button"
           >
-            View architecture slide
+            Technology stack
           </button>
         </footer>
       </div>
@@ -1144,32 +1145,35 @@ export function DashboardClient({
           </button>
           <div className="w-full max-w-5xl">
             <p className="text-center text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
-              Arbitra AI · System architecture
+              Arbitra AI · Technology stack
             </p>
             <h2
               className="mt-4 text-center text-3xl font-semibold tracking-tight text-white sm:text-5xl"
               id="architecture-title"
             >
-              Secure by design. Human controlled.
+              Platform architecture
             </h2>
-            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <p className="mt-3 text-center text-sm text-slate-400">
+              The services and interface components behind the escrow workflow.
+            </p>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                { name: "Next.js 15", detail: "App Router · typed API routes", color: "text-cyan-200" },
-                { name: "Supabase", detail: "Postgres · Auth · release holds", color: "text-emerald-200" },
-                { name: "PayPal SDK", detail: "REST API · sandbox payments", color: "text-orange-200" },
-                { name: "AG Grid", detail: "Milestone ledger · live status", color: "text-violet-200" },
+                { name: "Next.js 15", detail: "App Router · typed API routes" },
+                { name: "Supabase", detail: "Postgres · Auth · release holds" },
+                { name: "PayPal SDK", detail: "REST API · sandbox payments" },
+                { name: "AG Grid", detail: "Milestone ledger · live status" },
               ].map((technology) => (
                 <div
                   className="rounded-2xl border border-white/[0.09] bg-white/[0.035] p-6 text-center"
                   key={technology.name}
                 >
-                  <p className={`text-xl font-semibold ${technology.color}`}>{technology.name}</p>
+                  <p className="text-xl font-semibold text-slate-100">{technology.name}</p>
                   <p className="mt-3 text-xs leading-5 text-slate-400">{technology.detail}</p>
                 </div>
               ))}
             </div>
             <p className="mt-10 text-center text-xs text-slate-500">
-              AI assists with structured review; verified humans control every release.
+              Automated evidence review supports—not replaces—the client&apos;s release decision.
             </p>
           </div>
         </div>
