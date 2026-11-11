@@ -18,7 +18,6 @@ import {
   FileCheck2,
   GitCommitHorizontal,
   LoaderCircle,
-  LockKeyhole,
   LogOut,
   MessageSquareText,
   Pause,
@@ -26,6 +25,7 @@ import {
   Send,
   ShieldCheck,
   ShieldAlert,
+  Sparkles,
   WalletCards,
   X,
 } from "lucide-react";
@@ -77,7 +77,7 @@ const demoMilestone: MilestoneGridRow = {
 const statusStyles: Record<MilestoneStatus, string> = {
   AWAITING_FUNDS: "border-amber-300/20 bg-amber-300/10 text-amber-200",
   ESCROWED: "border-sky-300/20 bg-sky-300/10 text-sky-200",
-  PENDING_RELEASE: "border-amber-300/20 bg-amber-300/[0.08] text-amber-200",
+  PENDING_RELEASE: "border-emerald-300/20 bg-emerald-300/10 text-emerald-200",
   PAID: "border-slate-400/20 bg-slate-400/10 text-slate-300",
   MUTED_DISPUTE: "border-rose-300/20 bg-rose-300/10 text-rose-200",
 };
@@ -183,16 +183,11 @@ export function DashboardClient({
         "Share the agreed terms, party emails, budget, and objective milestone criteria. I will structure the negotiation and flag subjective requirements before saving.",
     },
   ]);
-  const [demoChatMessages, setDemoChatMessages] = useState<ChatMessage[]>([]);
-  const [demoChatInput, setDemoChatInput] = useState("");
-  const [isDemoChatLocked, setIsDemoChatLocked] = useState(false);
-  const [showArchitectureSlide, setShowArchitectureSlide] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
   const [actionError, setActionError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [fundingMessage, setFundingMessage] = useState("");
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   const loadMilestones = useCallback(async () => {
     if (!userEmail) {
@@ -349,8 +344,7 @@ export function DashboardClient({
     () => [
       {
         headerName: "Milestone title & status",
-        valueGetter: (params) =>
-          params.data ? `${params.data.title} ${params.data.status}` : "",
+        field: "title",
         minWidth: 250,
         flex: 1.5,
         cellRenderer: (params: ICellRendererParams<MilestoneGridRow>) => {
@@ -364,7 +358,7 @@ export function DashboardClient({
                 <span className="truncate text-sm font-medium text-slate-100">{row.title}</span>
                 {row.isSimulated ? (
                   <span className="shrink-0 rounded border border-violet-300/20 bg-violet-300/10 px-1.5 py-0.5 text-[9px] font-semibold tracking-wider text-violet-200">
-                    PREVIEW
+                    DEMO
                   </span>
                 ) : null}
               </div>
@@ -412,10 +406,7 @@ export function DashboardClient({
                 <span className="font-mono text-slate-200">{score}%</span>
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
-                <div
-                  className={`h-full rounded-full transition-all duration-1000 ease-out ${color}`}
-                  style={{ width: `${score}%` }}
-                />
+                <div className={`h-full rounded-full ${color}`} style={{ width: `${score}%` }} />
               </div>
             </div>
           );
@@ -577,13 +568,13 @@ export function DashboardClient({
       setDemoRow((current) => ({
         ...current,
         status: "PENDING_RELEASE",
-        score: 92,
+        score: 96,
         commitHash: "a41ce9b10f7d",
         verificationTimestamp: verifiedAt,
         releaseCountdownEta: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       }));
       setActionMessage(
-        "Simulation only: 92% objective compliance opened a 24-hour client hold. No money moved.",
+        "Simulation only: 96% objective compliance opened a 24-hour client hold. No money moved.",
       );
     } else {
       setDemoRow((current) => ({
@@ -599,25 +590,6 @@ export function DashboardClient({
       );
     }
     setIsSimulating(false);
-  }
-
-  function submitDemoChat(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const content = demoChatInput.trim();
-    if (!content || isDemoChatLocked) {
-      return;
-    }
-
-    setDemoChatMessages((current) => [
-      ...current,
-      { role: "user", content },
-      {
-        role: "assistant",
-        content:
-          "Preview only — this message stays in your browser and was not sent to Gemini or saved as a contract. Sign in with a verified party email to use the live parser.",
-      },
-    ]);
-    setDemoChatInput("");
   }
 
   async function signOut() {
@@ -643,6 +615,25 @@ export function DashboardClient({
     Object.entries(volumeByCurrency)
       .map(([currency, amount]) => formatCurrency(amount, currency))
       .join(" · ") || formatCurrency(0, "USD");
+
+  if (!userEmail) {
+    return (
+      <main className="min-h-screen bg-[#0b0e13] px-5 py-10 text-slate-100">
+        <div className="mx-auto flex min-h-[80vh] max-w-7xl flex-col items-center justify-center">
+          <div className="mb-8 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-300 text-slate-950">
+              <ShieldCheck size={21} />
+            </div>
+            <span className="text-sm font-semibold tracking-[0.16em] text-white">ARBITRA AI</span>
+          </div>
+          <LoginPanel configurationReady={configurationReady} />
+          <p className="mt-6 max-w-md text-center text-xs leading-5 text-slate-600">
+            Only verified contract parties can view milestones, authorize escrow, or raise a dispute.
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   const totals = [
     {
@@ -674,7 +665,7 @@ export function DashboardClient({
   ];
 
   return (
-    <main className="dashboard-classic min-h-screen bg-[#0b0e13] px-4 py-6 text-slate-100 sm:px-7 lg:px-10">
+    <main className="min-h-screen bg-[#0b0e13] px-4 py-6 text-slate-100 sm:px-7 lg:px-10">
       <div className="mx-auto max-w-[1600px]">
         <header className="flex flex-wrap items-center justify-between gap-5 border-b border-white/[0.07] pb-6">
           <div className="flex items-center gap-3">
@@ -684,65 +675,35 @@ export function DashboardClient({
             <div>
               <p className="text-sm font-semibold tracking-[0.18em] text-white">ARBITRA AI</p>
               <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.17em] text-slate-500">
-                Freelance escrow workspace
+                Escrow & compliance control plane
               </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            {userEmail ? (
-              <>
-                <div className="flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[0.05] px-3 py-1.5 text-[11px] text-emerald-200">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" />
-                  Secure session
-                </div>
-                <span className="max-w-[220px] truncate text-xs text-slate-400">{userEmail}</span>
-                <button
-                  className="rounded-lg border border-white/10 p-2 text-slate-400 transition hover:border-white/20 hover:text-white"
-                  onClick={() => void signOut()}
-                  title="Sign out"
-                  type="button"
-                >
-                  <LogOut size={15} />
-                </button>
-              </>
-            ) : (
-              <span className="flex items-center gap-2 rounded-full border border-violet-300/15 bg-violet-300/[0.05] px-3 py-1.5 text-[11px] text-violet-200">
-                <ShieldCheck size={13} />
-                Preview environment
-              </span>
-            )}
+            <div className="flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[0.05] px-3 py-1.5 text-[11px] text-emerald-200">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" />
+              Secure session
+            </div>
+            <span className="max-w-[220px] truncate text-xs text-slate-400">{userEmail}</span>
+            <button
+              className="rounded-lg border border-white/10 p-2 text-slate-400 transition hover:border-white/20 hover:text-white"
+              onClick={() => void signOut()}
+              title="Sign out"
+              type="button"
+            >
+              <LogOut size={15} />
+            </button>
           </div>
         </header>
-
-        {!userEmail ? (
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-cyan-300/15 bg-cyan-300/[0.04] px-4 py-3">
-            <div>
-              <p className="text-sm font-medium text-cyan-100">
-                Product preview
-              </p>
-              <p className="mt-1 text-xs leading-5 text-slate-400">
-                Explore the milestone review and 24-hour client hold. Sample activity is kept in this browser and never moves money.
-              </p>
-            </div>
-            <a
-              className="shrink-0 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-white/20 hover:text-white"
-              href="https://github.com/amhatech/Arbitra-Ai"
-              rel="noreferrer"
-              target="_blank"
-            >
-              View public source
-            </a>
-          </div>
-        ) : null}
 
         <section className="flex flex-wrap items-end justify-between gap-4 py-8">
           <div>
             <p className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-cyan-300">
               <Activity size={14} />
-              Portfolio overview
+              Treasury overview
             </p>
             <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-[38px]">
-              Escrow overview
+              Escrow command center
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
               Monitor objective delivery, protected balances, and every human release gate in one place.
@@ -808,114 +769,27 @@ export function DashboardClient({
             </div>
           ) : null}
 
-          <div className="hidden overflow-x-auto rounded-xl border border-white/[0.07] sm:block">
-            <div className="ag-grid-classic min-w-[980px] overflow-hidden">
-              <AgGridReact<MilestoneGridRow>
-                animateRows
-                columnDefs={columnDefs}
-                defaultColDef={defaultColDef}
-                domLayout="autoHeight"
-                getRowId={(params) => params.data.id}
-                headerHeight={48}
-                rowData={gridRows}
-                rowHeight={76}
-                theme={themeQuartz}
-                suppressCellFocus
-              />
-            </div>
-          </div>
-          <div className="space-y-3 sm:hidden">
-            {gridRows.map((row) => {
-              const holdExpired =
-                row.releaseCountdownEta !== null &&
-                new Date(row.releaseCountdownEta).getTime() <= Date.now();
-              const scoreColor =
-                row.score === null
-                  ? "bg-slate-500"
-                  : row.score >= 85
-                    ? "bg-emerald-400"
-                    : row.score >= 60
-                      ? "bg-amber-400"
-                      : "bg-rose-400";
-
-              return (
-                <article
-                  className="rounded-xl border border-white/[0.08] bg-[#11151d] p-4"
-                  key={row.id}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-100">{row.title}</p>
-                      <p className="mt-1 text-[11px] text-slate-500">
-                        {formatCurrency(row.amount, row.currency)}
-                        {row.isSimulated ? " · Preview data" : ""}
-                      </p>
-                    </div>
-                    <StatusBadge status={row.status} />
-                  </div>
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
-                      <span>Compliance score</span>
-                      <span>{row.score === null ? "Not reviewed" : `${row.score}%`}</span>
-                    </div>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
-                      <div
-                        className={`h-full rounded-full ${scoreColor}`}
-                        style={{ width: `${row.score ?? 0}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.06] pt-3">
-                    <span className="font-mono text-[10px] text-slate-500">
-                      {row.commitHash
-                        ? row.commitHash.slice(0, 10)
-                        : "Awaiting commit evidence"}
-                    </span>
-                    {row.status === "PENDING_RELEASE" && row.releaseCountdownEta ? (
-                      <div className="flex flex-wrap items-center justify-end gap-3">
-                        {holdExpired && row.canRelease ? (
-                          <button
-                            className="rounded-lg border border-emerald-300/20 bg-emerald-300/[0.07] px-2.5 py-1.5 text-[10px] font-medium text-emerald-200"
-                            onClick={() => void handleRelease(row)}
-                            type="button"
-                          >
-                            Release remaining
-                          </button>
-                        ) : (
-                          <button
-                            className="rounded-lg border border-rose-300/20 bg-rose-300/[0.07] px-2.5 py-1.5 text-[10px] font-medium text-rose-200"
-                            onClick={() => void handleDispute(row)}
-                            type="button"
-                          >
-                            Pause & dispute
-                          </button>
-                        )}
-                        <CountdownTimer eta={row.releaseCountdownEta} />
-                      </div>
-                    ) : row.status === "AWAITING_FUNDS" &&
-                      !row.isSimulated &&
-                      row.canAuthorize ? (
-                      <button
-                        className="rounded-lg border border-cyan-300/20 bg-cyan-300/[0.07] px-2.5 py-1.5 text-[10px] font-medium text-cyan-200"
-                        onClick={() => void handleAuthorize(row)}
-                        type="button"
-                      >
-                        Authorize escrow
-                      </button>
-                    ) : null}
-                  </div>
-                </article>
-              );
-            })}
+          <div className="ag-grid-dark overflow-hidden rounded-xl border border-white/[0.07]">
+            <AgGridReact<MilestoneGridRow>
+              animateRows
+              columnDefs={columnDefs}
+              defaultColDef={defaultColDef}
+              domLayout="autoHeight"
+              getRowId={(params) => params.data.id}
+              headerHeight={48}
+              rowData={gridRows}
+              rowHeight={76}
+              theme={themeQuartz}
+              suppressCellFocus
+            />
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-600">
-            <span>{userEmail ? "Live records are scoped to your verified party email." : "Live contract data requires verified party sign-in."}</span>
-            <span>Sample rows are local-only and never contact PayPal or Supabase.</span>
+            <span>Live records are scoped to your verified party email.</span>
+            <span>DEMO rows are local-only and never contact PayPal or Supabase.</span>
           </div>
         </section>
 
         <section className="mt-6 grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
-          {userEmail ? (
           <article className="flex min-h-[470px] flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-[#11151d]">
             <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
               <div>
@@ -992,134 +866,13 @@ export function DashboardClient({
               </div>
             </form>
           </article>
-          ) : (
-            <article className="flex min-h-[470px] flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-[#11151d]">
-              <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
-                <div>
-                  <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-100">
-                    <MessageSquareText size={16} className="text-cyan-300" />
-                    Contract negotiation chat
-                  </h2>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Local preview · messages are not sent or saved
-                  </p>
-                </div>
-                <span className="rounded-full border border-violet-300/15 bg-violet-300/[0.05] px-2.5 py-1 text-[10px] text-violet-200">
-                  PREVIEW
-                </span>
-              </div>
-
-              {isDemoChatLocked ? (
-                <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-orange-300/20 bg-orange-300/[0.07] text-orange-200">
-                    <LockKeyhole size={20} />
-                  </div>
-                  <p className="mt-4 text-sm font-semibold text-slate-100">Client left the chat.</p>
-                  <p className="mt-2 max-w-xs text-xs leading-5 text-slate-500">
-                    This conversation is locked. No contract or payment was changed.
-                  </p>
-                  <button
-                    className="mt-5 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-white/20 hover:text-white"
-                    onClick={() => setIsDemoChatLocked(false)}
-                    type="button"
-                  >
-                    Return to chat preview
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="flex-1 space-y-3 overflow-y-auto p-5">
-                    {demoChatMessages.length === 0 ? (
-                      <div className="flex gap-3">
-                        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-cyan-300/15 bg-cyan-300/[0.06] text-cyan-200">
-                          <Bot size={14} />
-                        </div>
-                        <div className="max-w-[88%] rounded-xl border border-white/[0.06] bg-[#0c1016] px-4 py-3 text-xs leading-6 text-slate-300">
-                          Type a sample negotiation message to preview the chat. This public demo does not send it to an AI service.
-                        </div>
-                      </div>
-                    ) : null}
-                    {demoChatMessages.map((message, index) => (
-                      <div
-                        className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}
-                        key={`demo-${message.role}-${index}`}
-                      >
-                        <div
-                          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
-                            message.role === "assistant"
-                              ? "border border-cyan-300/15 bg-cyan-300/[0.06] text-cyan-200"
-                              : "border border-white/10 bg-white/[0.05] text-slate-300"
-                          }`}
-                        >
-                          {message.role === "assistant" ? <Bot size={14} /> : <span className="text-[10px]">YOU</span>}
-                        </div>
-                        <div
-                          className={`max-w-[88%] rounded-xl px-4 py-3 text-xs leading-6 ${
-                            message.role === "assistant"
-                              ? "border border-white/[0.06] bg-[#0c1016] text-slate-300"
-                              : "border border-cyan-300/10 bg-cyan-300/[0.05] text-slate-200"
-                          }`}
-                        >
-                          {message.content}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <form className="border-t border-white/[0.07] p-4" onSubmit={submitDemoChat}>
-                    <label className="sr-only" htmlFor="demo-chat-message">
-                      Type a sample negotiation message
-                    </label>
-                    <textarea
-                      className="min-h-[90px] w-full resize-y rounded-xl border border-white/[0.08] bg-[#0b0e13] p-3 text-xs leading-5 text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-cyan-300/30"
-                      id="demo-chat-message"
-                      onChange={(event) => setDemoChatInput(event.target.value)}
-                      placeholder="Type a sample message for the screen recording…"
-                      value={demoChatInput}
-                    />
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                      <button
-                        className="text-[10px] text-slate-500 transition hover:text-orange-200"
-                        onClick={() => setIsDemoChatLocked(true)}
-                        type="button"
-                      >
-                        Show “Client left the chat”
-                      </button>
-                      <button
-                        className="flex items-center gap-2 rounded-lg bg-cyan-300 px-3.5 py-2 text-xs font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
-                        disabled={!demoChatInput.trim()}
-                        type="submit"
-                      >
-                        <Send size={13} />
-                        Preview message
-                      </button>
-                    </div>
-                  </form>
-                </>
-              )}
-
-              {isLoginOpen ? (
-                <div className="border-t border-white/[0.07] p-4">
-                  <LoginPanel configurationReady={configurationReady} />
-                </div>
-              ) : (
-                <button
-                  className="border-t border-white/[0.07] px-5 py-3 text-left text-[11px] font-medium text-cyan-200 transition hover:bg-white/[0.02]"
-                  onClick={() => setIsLoginOpen(true)}
-                  type="button"
-                >
-                  Sign in for the live Gemini parser →
-                </button>
-              )}
-            </article>
-          )}
 
           <article className="rounded-2xl border border-white/[0.07] bg-[#11151d] p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-100">
-                  <ShieldCheck size={16} className="text-violet-300" />
-                  Preview scenarios
+                  <Sparkles size={16} className="text-violet-300" />
+                  Simulation control grid
                 </h2>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
                   Exercise the compliance threshold and dual-gate interface without touching a real contract.
@@ -1199,69 +952,11 @@ export function DashboardClient({
         <footer className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] py-5 text-[10px] text-slate-600">
           <span>Arbitra AI · compliance-grade escrow controls</span>
           <span className="flex items-center gap-2">
-            <span className={`h-1.5 w-1.5 rounded-full ${userEmail ? "bg-emerald-300" : "bg-violet-300"}`} />
-            {userEmail ? `Signed in · ${userEmail}` : "Public preview · no sign-in required"}
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+            Signed in · {userEmail}
           </span>
-          <button
-            className="rounded-lg border border-white/10 px-3 py-2 text-[10px] font-medium text-slate-300 transition hover:border-cyan-300/25 hover:text-cyan-200"
-            onClick={() => setShowArchitectureSlide(true)}
-            type="button"
-          >
-            Technology stack
-          </button>
         </footer>
       </div>
-
-      {showArchitectureSlide ? (
-        <div
-          aria-labelledby="architecture-title"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#080b10]/95 p-6 backdrop-blur-xl"
-          role="dialog"
-        >
-          <button
-            aria-label="Close architecture slide"
-            className="absolute right-6 top-6 rounded-lg border border-white/10 p-2 text-slate-400 transition hover:text-white"
-            onClick={() => setShowArchitectureSlide(false)}
-            type="button"
-          >
-            <X size={18} />
-          </button>
-          <div className="w-full max-w-5xl">
-            <p className="text-center text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
-              Arbitra AI · Technology stack
-            </p>
-            <h2
-              className="mt-4 text-center text-3xl font-semibold tracking-tight text-white sm:text-5xl"
-              id="architecture-title"
-            >
-              Platform architecture
-            </h2>
-            <p className="mt-3 text-center text-sm text-slate-400">
-              The services and interface components behind the escrow workflow.
-            </p>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { name: "Next.js 15", detail: "App Router · typed API routes" },
-                { name: "Supabase", detail: "Postgres · Auth · release holds" },
-                { name: "PayPal SDK", detail: "REST API · sandbox payments" },
-                { name: "AG Grid", detail: "Milestone ledger · live status" },
-              ].map((technology) => (
-                <div
-                  className="rounded-2xl border border-white/[0.09] bg-white/[0.035] p-6 text-center"
-                  key={technology.name}
-                >
-                  <p className="text-xl font-semibold text-slate-100">{technology.name}</p>
-                  <p className="mt-3 text-xs leading-5 text-slate-400">{technology.detail}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-10 text-center text-xs text-slate-500">
-              Automated evidence review supports—not replaces—the client&apos;s release decision.
-            </p>
-          </div>
-        </div>
-      ) : null}
     </main>
   );
 }
