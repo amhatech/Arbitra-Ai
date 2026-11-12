@@ -56,28 +56,47 @@ interface ChatMessage {
   content: string;
 }
 
-const demoMilestone: MilestoneGridRow = {
-  id: "local-simulation-milestone",
-  contractId: "local-simulation-contract",
-  title: "Responsive escrow dashboard",
-  amount: 7200,
-  currency: "USD",
-  status: "ESCROWED",
-  score: null,
-  verificationType: "github_commit",
-  commitHash: null,
-  verificationTimestamp: null,
-  releaseCountdownEta: null,
-  releasedAmount: 0,
-  canAuthorize: false,
-  canRelease: false,
-  isSimulated: true,
-};
+const demoMilestones: MilestoneGridRow[] = [
+  {
+    id: "local-preview-design",
+    contractId: "local-preview-contract",
+    title: "Milestone 1 · Figma product design",
+    amount: 500_000,
+    currency: "NGN",
+    status: "ESCROWED",
+    score: null,
+    verificationType: "figma_link",
+    commitHash: null,
+    verificationTimestamp: null,
+    releaseCountdownEta: null,
+    releasedAmount: 0,
+    canAuthorize: false,
+    canRelease: false,
+    isSimulated: true,
+  },
+  {
+    id: "local-preview-build",
+    contractId: "local-preview-contract",
+    title: "Milestone 2 · Next.js landing page",
+    amount: 1_000_000,
+    currency: "NGN",
+    status: "ESCROWED",
+    score: null,
+    verificationType: "github_commit",
+    commitHash: null,
+    verificationTimestamp: null,
+    releaseCountdownEta: null,
+    releasedAmount: 0,
+    canAuthorize: false,
+    canRelease: false,
+    isSimulated: true,
+  },
+];
 
 const statusStyles: Record<MilestoneStatus, string> = {
   AWAITING_FUNDS: "border-amber-300/20 bg-amber-300/10 text-amber-200",
   ESCROWED: "border-sky-300/20 bg-sky-300/10 text-sky-200",
-  PENDING_RELEASE: "border-emerald-300/20 bg-emerald-300/10 text-emerald-200",
+  PENDING_RELEASE: "border-orange-300/25 bg-orange-300/10 text-orange-200",
   PAID: "border-slate-400/20 bg-slate-400/10 text-slate-300",
   MUTED_DISPUTE: "border-rose-300/20 bg-rose-300/10 text-rose-200",
 };
@@ -104,7 +123,9 @@ function formatCurrency(amount: number, currency: string): string {
 function StatusBadge({ status }: { status: MilestoneStatus }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold tracking-[0.12em] ${statusStyles[status]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold tracking-[0.12em] ${
+        status === "PENDING_RELEASE" ? "animate-pulse" : ""
+      } ${statusStyles[status]}`}
     >
       <span className="h-1.5 w-1.5 rounded-full bg-current" />
       {status.replaceAll("_", " ")}
@@ -172,10 +193,13 @@ export function DashboardClient({
   userEmail,
 }: DashboardClientProps) {
   const [liveRows, setLiveRows] = useState<MilestoneGridRow[]>([]);
-  const [demoRow, setDemoRow] = useState(demoMilestone);
+  const [demoRows, setDemoRows] = useState(demoMilestones);
   const [loadError, setLoadError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [negotiationLog, setNegotiationLog] = useState("");
+  const [previewChatInput, setPreviewChatInput] = useState("");
+  const [previewChatMessages, setPreviewChatMessages] = useState<ChatMessage[]>([]);
+  const [isPreviewChatLocked, setIsPreviewChatLocked] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
@@ -188,6 +212,8 @@ export function DashboardClient({
   const [actionError, setActionError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [fundingMessage, setFundingMessage] = useState("");
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isArchitectureOpen, setIsArchitectureOpen] = useState(false);
 
   const loadMilestones = useCallback(async () => {
     if (!userEmail) {
@@ -246,21 +272,20 @@ export function DashboardClient({
     }
   }, [loadMilestones]);
 
-  const gridRows = useMemo(
-    () => [demoRow, ...liveRows],
-    [demoRow, liveRows],
-  );
+  const gridRows = useMemo(() => [...demoRows, ...liveRows], [demoRows, liveRows]);
 
   const handleDispute = useCallback(
     async (row: MilestoneGridRow) => {
       setActionError("");
       setActionMessage("");
       if (row.isSimulated) {
-        setDemoRow((current) => ({
-          ...current,
-          status: "MUTED_DISPUTE",
-          releaseCountdownEta: null,
-        }));
+        setDemoRows((current) =>
+          current.map((milestone) =>
+            milestone.id === row.id
+              ? { ...milestone, status: "MUTED_DISPUTE", releaseCountdownEta: null }
+              : milestone,
+          ),
+        );
         setActionMessage("Simulation only: the demo milestone is paused; no funds or records changed.");
         return;
       }
@@ -564,32 +589,51 @@ export function DashboardClient({
     setActionError("");
     await new Promise<void>((resolve) => window.setTimeout(resolve, 450));
     const verifiedAt = new Date().toISOString();
+    setDemoRows((current) =>
+      current.map((milestone) =>
+        milestone.id === "local-preview-build"
+          ? {
+              ...milestone,
+              status: compliant ? "PENDING_RELEASE" : "ESCROWED",
+              score: compliant ? 92 : 34,
+              commitHash: compliant ? "a41ce9b10f7d" : "broken-commit",
+              verificationTimestamp: verifiedAt,
+              releaseCountdownEta: compliant
+                ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+                : null,
+            }
+          : milestone,
+      ),
+    );
     if (compliant) {
-      setDemoRow((current) => ({
-        ...current,
-        status: "PENDING_RELEASE",
-        score: 96,
-        commitHash: "a41ce9b10f7d",
-        verificationTimestamp: verifiedAt,
-        releaseCountdownEta: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      }));
       setActionMessage(
-        "Simulation only: 96% objective compliance opened a 24-hour client hold. No money moved.",
+        "Demo simulation: 92% compliance opened the 24-hour client review window. No real verification or payment occurred.",
       );
     } else {
-      setDemoRow((current) => ({
-        ...current,
-        status: "ESCROWED",
-        score: 32,
-        commitHash: "broken-commit",
-        verificationTimestamp: verifiedAt,
-        releaseCountdownEta: null,
-      }));
       setActionMessage(
-        "Simulation only: broken evidence scored below 85%; funds remain escrowed.",
+        "Demo simulation: the broken submission scored 34%; the milestone remains escrowed. No real verification or payment occurred.",
       );
     }
     setIsSimulating(false);
+  }
+
+  function submitPreviewChat(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const message = previewChatInput.trim();
+    if (!message || isPreviewChatLocked) {
+      return;
+    }
+
+    setPreviewChatMessages((current) => [
+      ...current,
+      { role: "user", content: message },
+      {
+        role: "assistant",
+        content:
+          "Preview received. In the live workflow, agreed terms are checked for measurable milestones before they are saved. Use the scenario controls to preview commit review and the client hold.",
+      },
+    ]);
+    setPreviewChatInput("");
   }
 
   async function signOut() {
@@ -602,12 +646,13 @@ export function DashboardClient({
     window.location.assign("/dashboard");
   }
 
-  const protectedCount = liveRows.filter(
+  const overviewRows = userEmail ? liveRows : demoRows;
+  const protectedCount = overviewRows.filter(
     (row) => row.status === "ESCROWED" || row.status === "PENDING_RELEASE",
   ).length;
-  const pendingCount = liveRows.filter((row) => row.status === "PENDING_RELEASE").length;
-  const compliantCount = liveRows.filter((row) => row.score !== null && row.score >= 85).length;
-  const volumeByCurrency = liveRows.reduce<Record<string, number>>((totals, row) => {
+  const pendingCount = overviewRows.filter((row) => row.status === "PENDING_RELEASE").length;
+  const compliantCount = overviewRows.filter((row) => row.score !== null && row.score >= 85).length;
+  const volumeByCurrency = overviewRows.reduce<Record<string, number>>((totals, row) => {
     totals[row.currency] = (totals[row.currency] ?? 0) + row.amount;
     return totals;
   }, {});
@@ -616,30 +661,13 @@ export function DashboardClient({
       .map(([currency, amount]) => formatCurrency(amount, currency))
       .join(" · ") || formatCurrency(0, "USD");
 
-  if (!userEmail) {
-    return (
-      <main className="min-h-screen bg-[#0b0e13] px-5 py-10 text-slate-100">
-        <div className="mx-auto flex min-h-[80vh] max-w-7xl flex-col items-center justify-center">
-          <div className="mb-8 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-300 text-slate-950">
-              <ShieldCheck size={21} />
-            </div>
-            <span className="text-sm font-semibold tracking-[0.16em] text-white">ARBITRA AI</span>
-          </div>
-          <LoginPanel configurationReady={configurationReady} />
-          <p className="mt-6 max-w-md text-center text-xs leading-5 text-slate-600">
-            Only verified contract parties can view milestones, authorize escrow, or raise a dispute.
-          </p>
-        </div>
-      </main>
-    );
-  }
-
   const totals = [
     {
-      label: "Live contract volume",
+      label: userEmail ? "Live contract volume" : "Preview contract value",
       value: liveVolume,
-      detail: `${liveRows.length} live milestones in view`,
+      detail: userEmail
+        ? `${liveRows.length} live milestones in view`
+        : `${demoRows.length} sample milestones · preview only`,
       icon: <CircleDollarSign size={19} />,
       trend: "up" as const,
     },
@@ -680,21 +708,49 @@ export function DashboardClient({
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[0.05] px-3 py-1.5 text-[11px] text-emerald-200">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" />
-              Secure session
-            </div>
-            <span className="max-w-[220px] truncate text-xs text-slate-400">{userEmail}</span>
-            <button
-              className="rounded-lg border border-white/10 p-2 text-slate-400 transition hover:border-white/20 hover:text-white"
-              onClick={() => void signOut()}
-              title="Sign out"
-              type="button"
-            >
-              <LogOut size={15} />
-            </button>
+            {userEmail ? (
+              <>
+                <div className="flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[0.05] px-3 py-1.5 text-[11px] text-emerald-200">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" />
+                  Secure session
+                </div>
+                <span className="max-w-[220px] truncate text-xs text-slate-400">{userEmail}</span>
+                <button
+                  className="rounded-lg border border-white/10 p-2 text-slate-400 transition hover:border-white/20 hover:text-white"
+                  onClick={() => void signOut()}
+                  title="Sign out"
+                  type="button"
+                >
+                  <LogOut size={15} />
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 rounded-full border border-cyan-300/15 bg-cyan-300/[0.05] px-3 py-1.5 text-[11px] text-cyan-200">
+                  <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />
+                  Interactive product demo
+                </div>
+                <button
+                  className="rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-white/20 hover:text-white"
+                  onClick={() => setIsLoginOpen(true)}
+                  type="button"
+                >
+                  Party sign in
+                </button>
+              </>
+            )}
           </div>
         </header>
+
+        {!userEmail ? (
+          <div className="mt-5 flex items-start gap-3 rounded-xl border border-cyan-300/15 bg-cyan-300/[0.04] px-4 py-3 text-xs leading-5 text-cyan-100/80">
+            <ShieldCheck className="mt-0.5 shrink-0 text-cyan-300" size={16} />
+            <p>
+              Product preview: sample milestones and scenario scores are simulated in this browser.
+              No contract is saved and no money moves.
+            </p>
+          </div>
+        ) : null}
 
         <section className="flex flex-wrap items-end justify-between gap-4 py-8">
           <div>
@@ -743,7 +799,9 @@ export function DashboardClient({
                 Milestone verification ledger
               </h2>
               <p className="mt-1 text-xs text-slate-500">
-                Holds are enforced server-side; compliant work never triggers an instant release.
+                {userEmail
+                  ? "Holds are enforced server-side; compliant work never triggers an instant release."
+                  : "Explore milestone review, evidence scores, and the 24-hour client hold."}
               </p>
             </div>
             <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500">
@@ -784,12 +842,120 @@ export function DashboardClient({
             />
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-600">
-            <span>Live records are scoped to your verified party email.</span>
-            <span>DEMO rows are local-only and never contact PayPal or Supabase.</span>
+            <span>{userEmail ? "Live records are scoped to your verified party email." : "Sample milestones · NGN 1,500,000 total"}</span>
+            <span>Preview data is local-only and never contacts PayPal or Supabase.</span>
           </div>
         </section>
 
         <section className="mt-6 grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
+          {!userEmail ? (
+            <article className="flex min-h-[470px] flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-[#11151d]">
+              <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
+                <div>
+                  <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+                    <MessageSquareText size={16} className="text-cyan-300" />
+                    Conversational contract preview
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Interactive sample · no message is sent to an AI service
+                  </p>
+                </div>
+                <span className="rounded-full border border-cyan-300/15 bg-cyan-300/[0.05] px-2.5 py-1 text-[10px] text-cyan-200">
+                  PREVIEW
+                </span>
+              </div>
+
+              {isPreviewChatLocked ? (
+                <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-orange-300/20 bg-orange-300/[0.07] text-orange-200">
+                    <LogOut size={20} />
+                  </div>
+                  <p className="mt-4 text-sm font-semibold text-slate-100">Client left the chat.</p>
+                  <p className="mt-2 max-w-xs text-xs leading-5 text-slate-500">
+                    This sample conversation is locked. No contract or payment was changed.
+                  </p>
+                  <button
+                    className="mt-5 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-white/20 hover:text-white"
+                    onClick={() => setIsPreviewChatLocked(false)}
+                    type="button"
+                  >
+                    Return to chat preview
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex-1 space-y-3 overflow-y-auto p-5">
+                    {previewChatMessages.length === 0 ? (
+                      <div className="flex gap-3">
+                        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-cyan-300/15 bg-cyan-300/[0.06] text-cyan-200">
+                          <Bot size={14} />
+                        </div>
+                        <div className="max-w-[88%] rounded-xl border border-white/[0.06] bg-[#0c1016] px-4 py-3 text-xs leading-6 text-slate-300">
+                          Try the sample agreement: “Build a Next.js landing page for ₦1,500,000.
+                          Milestone 1 is the Figma design for ₦500,000. Milestone 2 is the live
+                          code on GitHub for ₦1,000,000.”
+                        </div>
+                      </div>
+                    ) : null}
+                    {previewChatMessages.map((message, index) => (
+                      <div
+                        className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}
+                        key={`preview-${message.role}-${index}`}
+                      >
+                        <div
+                          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                            message.role === "assistant"
+                              ? "border border-cyan-300/15 bg-cyan-300/[0.06] text-cyan-200"
+                              : "border border-white/10 bg-white/[0.05] text-slate-300"
+                          }`}
+                        >
+                          {message.role === "assistant" ? <Bot size={14} /> : <span className="text-[10px]">YOU</span>}
+                        </div>
+                        <div
+                          className={`max-w-[88%] rounded-xl px-4 py-3 text-xs leading-6 ${
+                            message.role === "assistant"
+                              ? "border border-white/[0.06] bg-[#0c1016] text-slate-300"
+                              : "border border-cyan-300/10 bg-cyan-300/[0.05] text-slate-200"
+                          }`}
+                        >
+                          {message.content}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <form className="border-t border-white/[0.07] p-4" onSubmit={submitPreviewChat}>
+                    <label className="sr-only" htmlFor="preview-chat-message">
+                      Type a sample agreement
+                    </label>
+                    <textarea
+                      className="min-h-[90px] w-full resize-y rounded-xl border border-white/[0.08] bg-[#0b0e13] p-3 text-xs leading-5 text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-cyan-300/30"
+                      id="preview-chat-message"
+                      onChange={(event) => setPreviewChatInput(event.target.value)}
+                      placeholder="Type the sample agreement…"
+                      value={previewChatInput}
+                    />
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                      <button
+                        className="rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-white/20 hover:text-white"
+                        onClick={() => setIsPreviewChatLocked(true)}
+                        type="button"
+                      >
+                        Show “Client left the chat”
+                      </button>
+                      <button
+                        className="flex items-center gap-2 rounded-lg bg-cyan-300 px-3.5 py-2 text-xs font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={!previewChatInput.trim()}
+                        type="submit"
+                      >
+                        <Send size={13} />
+                        Preview message
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
+            </article>
+          ) : (
           <article className="flex min-h-[470px] flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-[#11151d]">
             <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
               <div>
@@ -866,6 +1032,7 @@ export function DashboardClient({
               </div>
             </form>
           </article>
+          )}
 
           <article className="rounded-2xl border border-white/[0.07] bg-[#11151d] p-5">
             <div className="flex items-start justify-between gap-3">
@@ -879,7 +1046,7 @@ export function DashboardClient({
                 </p>
               </div>
               <span className="rounded-full border border-violet-300/15 bg-violet-300/[0.05] px-2 py-1 text-[9px] font-semibold tracking-wider text-violet-200">
-                LOCAL ONLY
+                {userEmail ? "LOCAL ONLY" : "DEMO SCENARIOS"}
               </span>
             </div>
 
@@ -895,8 +1062,8 @@ export function DashboardClient({
                     <X size={17} />
                   </span>
                   <span>
-                    <span className="block text-xs font-semibold text-slate-200">Simulate bad / broken commit</span>
-                    <span className="mt-1 block text-[10px] text-slate-500">Score below threshold · funds remain escrowed</span>
+                    <span className="block text-xs font-semibold text-slate-200">Simulate malicious / broken commit</span>
+                    <span className="mt-1 block text-[10px] text-slate-500">34% score · release remains blocked</span>
                   </span>
                 </span>
                 <Play size={14} className="text-slate-600 transition group-hover:text-rose-200" />
@@ -914,7 +1081,7 @@ export function DashboardClient({
                   </span>
                   <span>
                     <span className="block text-xs font-semibold text-slate-200">Simulate 100% compliant commit</span>
-                    <span className="mt-1 block text-[10px] text-slate-500">Score ≥ 85% · opens client hold window</span>
+                    <span className="mt-1 block text-[10px] text-slate-500">92% score · opens the 24-hour client hold</span>
                   </span>
                 </span>
                 <Play size={14} className="text-slate-600 transition group-hover:text-emerald-200" />
@@ -933,7 +1100,7 @@ export function DashboardClient({
                 </li>
                 <li className="flex gap-3 text-[11px] leading-5 text-slate-400">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/[0.06] font-mono text-[9px] text-slate-300">02</span>
-                  Scores at least 85% start an exact 24-hour database hold; no automatic payout occurs.
+                  Scores at least 85% start an exact 24-hour client hold; no instant release occurs.
                 </li>
                 <li className="flex gap-3 text-[11px] leading-5 text-slate-400">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/[0.06] font-mono text-[9px] text-slate-300">03</span>
@@ -944,19 +1111,109 @@ export function DashboardClient({
 
             <div className="mt-4 flex items-start gap-2 text-[10px] leading-5 text-slate-600">
               <ShieldAlert size={13} className="mt-0.5 shrink-0 text-amber-300/70" />
-              Simulation rows are browser-local test data. Real payout execution is server-only and requires a verified PayPal webhook.
+              {userEmail
+                ? "Simulation rows are browser-local test data. Real payout execution is server-only and requires verified payment events."
+                : "These scenarios demonstrate the interface only. They do not call the verifier, create a contract, or move money."}
             </div>
           </article>
         </section>
 
         <footer className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] py-5 text-[10px] text-slate-600">
           <span>Arbitra AI · compliance-grade escrow controls</span>
-          <span className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-            Signed in · {userEmail}
-          </span>
+          <div className="flex flex-wrap items-center gap-4">
+            {!userEmail ? (
+              <span className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />
+                Public product demo · no sign-in required
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                Signed in · {userEmail}
+              </span>
+            )}
+            <button
+              className="rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-white/20 hover:text-white"
+              onClick={() => setIsArchitectureOpen(true)}
+              type="button"
+            >
+              Platform architecture
+            </button>
+          </div>
         </footer>
       </div>
+      {isLoginOpen && !userEmail ? (
+        <div
+          aria-label="Party sign in"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+          role="dialog"
+        >
+          <div className="relative w-full max-w-md">
+            <button
+              aria-label="Close sign in"
+              className="absolute right-3 top-3 z-10 rounded-lg border border-white/10 bg-[#11151d] p-2 text-slate-300 hover:text-white"
+              onClick={() => setIsLoginOpen(false)}
+              type="button"
+            >
+              <X size={16} />
+            </button>
+            <LoginPanel configurationReady={configurationReady} />
+          </div>
+        </div>
+      ) : null}
+      {isArchitectureOpen ? (
+        <div
+          aria-label="Platform architecture"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#070b12]/90 p-5 backdrop-blur-md"
+          role="dialog"
+        >
+          <section className="w-full max-w-3xl rounded-2xl border border-white/10 bg-[#11151d] p-6 shadow-2xl sm:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
+                  Arbitra AI
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">Platform architecture</h2>
+                <p className="mt-2 text-sm text-slate-400">
+                  A typed web application, compliance ledger, and payment-provider integration.
+                </p>
+              </div>
+              <button
+                aria-label="Close architecture"
+                className="rounded-lg border border-white/10 p-2 text-slate-300 hover:text-white"
+                onClick={() => setIsArchitectureOpen(false)}
+                type="button"
+              >
+                <X size={17} />
+              </button>
+            </div>
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              {[
+                ["Next.js", "Application and server API routes"],
+                ["Supabase", "Postgres ledger and verified-party access"],
+                ["PayPal Sandbox", "Authorization and milestone payout APIs"],
+                ["AG Grid", "Milestone status and verification command center"],
+              ].map(([technology, description]) => (
+                <div
+                  className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4"
+                  key={technology}
+                >
+                  <p className="font-semibold text-slate-100">{technology}</p>
+                  <p className="mt-1 text-sm leading-5 text-slate-400">{description}</p>
+                </div>
+              ))}
+            </div>
+            {!userEmail ? (
+              <p className="mt-5 text-xs leading-5 text-slate-500">
+                This screen-recording preview uses sample data. Its simulated score and countdown
+                do not represent a live AI verification or PayPal transaction.
+              </p>
+            ) : null}
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

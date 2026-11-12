@@ -4,6 +4,18 @@ Arbitra AI is a Next.js 15, Supabase, Gemini, and PayPal Sandbox application for
 freelance contract negotiation, milestone evidence review, and client-controlled
 funding releases.
 
+## Public video-demo preview
+
+Open `/dashboard` to explore the product preview without signing in. The preview
+includes a sample NGN 1,500,000 contract, an interactive local conversation,
+locked-chat screen, verification scenarios, a 24-hour countdown, and a platform
+architecture slide. Demo scores and contract rows are browser-local examples;
+they do not call Gemini, GitHub, Supabase, or PayPal and do not move funds.
+
+The authenticated workspace and live integrations remain available to verified
+contract parties when the required services are configured. The work-verifier
+endpoint is a signed GitHub webhook and is not triggered by the preview buttons.
+
 ## Requirements
 
 - Node.js 20.9 or newer
